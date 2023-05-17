@@ -1,4 +1,3 @@
-# hello_world.py
 import PySimpleGUI as sg
 import vlc
 from sys import platform as PLATFORM
@@ -284,7 +283,7 @@ column_Universum = [
 ]
 
 # Layout within the column on the Code 837 Screen
-column_code837 = [
+column_code837_1 = [
     [
         sg.Text(
             "Was ist der gesuchte Code Name?",
@@ -372,6 +371,22 @@ column_code837 = [
         ),
     ],
     [sg.Text("", expand_y=True)],
+]
+column_code837_2 = [
+    [sg.Text("", expand_y=True)],
+    [
+        sg.Input(
+            k="-INPUT-Code837-",
+            font=(any, 23),
+            size=(9, 1),
+            expand_x=True,
+            justification="c",
+            visible="false",
+        )
+    ],
+    [
+        sg.Text("", expand_y=True, visible="false"),
+    ],
 ]
 
 # Layout within the Master Folder Window
@@ -856,12 +871,23 @@ def code837_window():
     layout_code837 = [
         [
             sg.Column(
-                column_code837,
+                column_code837_1,
                 expand_y=True,
                 vertical_alignment="center",
                 justification="c",
                 element_justification="l",
-                k="-Code837Column-",
+                k="-Code837Column1-",
+            ),
+        ],
+        [
+            sg.Column(
+                column_code837_2,
+                expand_y=True,
+                vertical_alignment="center",
+                justification="c",
+                element_justification="c",
+                k="-Code837Column2-",
+                visible=False,
             ),
         ],
     ]
@@ -882,7 +908,8 @@ def code837_window():
 
         # Open Input if Solution is correct
         if event == "Fels Israels":
-            pass
+            code837_window["-Code837Column1-"].update(visible=False)
+            code837_window["-Code837Column2-"].update(visible=True)
         else:
             sg.popup_ok(
                 "Eingabe falsch!",
