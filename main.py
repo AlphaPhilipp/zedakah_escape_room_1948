@@ -240,7 +240,7 @@ column_Ordnung_Bottom = [
         )
     ],
     [
-        sg.Button("Lösung prüfen", k="-CHECK-Ordnung-", size=(50, 30), font=(any, 23)),
+        sg.Button("Lösung prüfen", k="-CHECK-Ordnung-", size=(20, 2), font=(any, 23)),
     ],
 ]
 
@@ -373,7 +373,13 @@ column_code837_1 = [
     [sg.Text("", expand_y=True)],
 ]
 column_code837_2 = [
-    [sg.Text("", expand_y=True)],
+    [
+        sg.Text(
+            "",
+            k="-EXPAND-",
+            expand_y=True,
+        )
+    ],
     [
         sg.Input(
             k="-INPUT-Code837-",
@@ -381,11 +387,11 @@ column_code837_2 = [
             size=(9, 1),
             expand_x=True,
             justification="c",
-            visible="false",
         )
     ],
+    [sg.Button("Lösung prüfen")],
     [
-        sg.Text("", expand_y=True, visible="false"),
+        sg.Text("", k="-EXPAND2-", expand_y=True),
     ],
 ]
 
@@ -419,8 +425,66 @@ master_window = sg.Window(
     size=(1920, 1080),
     keep_on_top=True,
     element_justification="center",
+    element_padding=None,
 ).Finalize()
 master_window.Maximize()
+
+
+def master_media_window():
+    # ------- GUI definition & setup --------#
+
+    layout_mastermediaplayer = [
+        [sg.Text("", expand_y=True)],
+        [
+            sg.Image(
+                "",
+                size=(1400, 788),
+                key="-VID_OUT-",
+                expand_x=True,
+            )
+        ],
+        [sg.Text("", expand_y=True)],
+    ]
+
+    master_media_window = sg.Window(
+        "Master Media Player",
+        layout_mastermediaplayer,
+        element_justification="center",
+        finalize=True,
+        keep_on_top=True,
+        no_titlebar=True,
+        location=(0, 0),
+    )
+    master_media_window.Maximize()
+    master_media_window["-VID_OUT-"].expand(True, True)  # type: sg.Element
+    # ------------ Media Player Setup ---------#
+
+    inst = vlc.Instance()
+    list_player = inst.media_list_player_new()
+    media_list = inst.media_list_new([])
+    list_player.set_media_list(media_list)
+    player = list_player.get_media_player()
+    if PLATFORM.startswith("linux"):
+        player.set_xwindow(master_media_window["-VID_OUT-"].Widget.winfo_id())
+    else:
+        player.set_hwnd(master_media_window["-VID_OUT-"].Widget.winfo_id())
+
+    media_list.add_media("Master.mp4")
+    list_player.play()
+    # ------------ The Event Loop ------------#
+    while True:
+        event, values = master_media_window.read(
+            timeout=1000
+        )  # run with a timeout so that current location can be updated
+        if event == sg.WIN_CLOSED:
+            break
+
+        # update elapsed time if there is a video loaded and the player is playing
+        if player.is_playing():
+            pass
+        else:
+            break
+    master_media_window.close()
 
 
 # Second (Subfolders) Window
@@ -468,16 +532,14 @@ def subfolder_window():
         layout_subfolders,
         no_titlebar=True,
         location=(0, 0),
-        size=(1920, 1080),
         keep_on_top=True,
     ).Finalize()
     subfolders_window.Maximize()
 
     # Defining variables
-    # DEVELOPMENT. Skip puzzles
-    unlock_Teepause = True
-    unlock_Universum = True
-    unlock_Code837 = True
+    unlock_Teepause = False
+    unlock_Universum = False
+    unlock_Code837 = False
 
     solved_Ordnung = False
     solved_Teepause = False
@@ -664,16 +726,18 @@ def ordnung_window():
                 vertical_alignment="center",
                 justification="c",
                 element_justification="l",
+                expand_y=False,
                 k="-OrdnungColumnList-",
-                size=(960, 900),
             ),
         ],
+        [sg.Text("", expand_y=True)],
         [
             sg.Column(
                 column_Ordnung_Bottom,
                 vertical_alignment="c",
                 justification="c",
                 element_justification="c",
+                expand_y=True,
             )
         ],
     ]
@@ -683,7 +747,6 @@ def ordnung_window():
         layout_ordnung,
         no_titlebar=True,
         location=(0, 0),
-        size=(1920, 1080),
         keep_on_top=True,
     ).Finalize()
     ordnung_window.Maximize()
@@ -729,7 +792,7 @@ def media_player():
     # ------- GUI definition & setup --------#
 
     layout_mediaplayer = [
-        [sg.Image("", size=(1920, 1080), key="-VID_OUT-")],
+        [sg.Image("", size=(1400, 788), key="-VID_OUT-")],
     ]
 
     media_window = sg.Window(
@@ -741,6 +804,7 @@ def media_player():
         no_titlebar=True,
         location=(0, 0),
     )
+    media_window.Maximize()
     media_window["-VID_OUT-"].expand(True, True)  # type: sg.Element
     # ------------ Media Player Setup ---------#
 
@@ -774,7 +838,6 @@ def media_player():
                 keep_on_top=True,
             )
             break
-
     media_window.close()
 
 
@@ -804,7 +867,6 @@ def universum_window():
         layout_universum,
         no_titlebar=True,
         location=(0, 0),
-        size=(1920, 1080),
         keep_on_top=True,
         element_justification="c",
     ).Finalize()
@@ -897,7 +959,6 @@ def code837_window():
         layout_code837,
         no_titlebar=True,
         location=(0, 0),
-        size=(1920, 1080),
         keep_on_top=True,
     ).Finalize()
     code837_window.Maximize()
@@ -910,7 +971,22 @@ def code837_window():
         if event == "Fels Israels":
             code837_window["-Code837Column1-"].update(visible=False)
             code837_window["-Code837Column2-"].update(visible=True)
-        else:
+
+        if event == "Lösung prüfen" and values["-INPUT-Code837-"] == "Fels Israels":
+            sg.popup(
+                "Korrekt. OK zum schließen",
+                keep_on_top=True,
+            )
+            break
+
+        elif event == "Lösung prüfen":
+            sg.popup_ok(
+                "Codename falsch!",
+                title="Fehler",
+                keep_on_top=True,
+            )
+
+        if event != "Fels Israels" or event != "Lösung prüfen":
             sg.popup_ok(
                 "Eingabe falsch!",
                 title="Fehler",
@@ -923,13 +999,14 @@ def code837_window():
     code837_window.close()
 
 
-# First Window (Master Window) event loop
+# Master event loop
 while True:
-    event, values = master_window.read()
+    event, values = master_window.read(timeout=1000)
 
     # Turn on Screen with tap
     if event == "-ACTIVATE-":
         master_window["-ACTIVATE-"].update(visible=False)
+        master_media_window()
         master_window["-MasterFolderColumn-"].update(visible=True)
 
     # Click on Master Folder opens Password Popup
@@ -937,8 +1014,6 @@ while True:
         password = sg.popup_get_text(
             "Passwort eingeben",
             "Passworteingabe",
-            # DEVELOPMENT: SKIP PW. DELETE BEFORE INSTALLATION
-            default_text="Israel1948",
             icon="LockedFolder.png",
             keep_on_top=True,
         )
