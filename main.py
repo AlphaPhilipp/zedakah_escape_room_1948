@@ -697,6 +697,7 @@ def subfolder_window():
             or event == "Subfolder-Code837-4"
         ) and unlock_Code837 == True:
             code837_window()
+            break
 
         # Error if locked
         elif (
@@ -818,7 +819,7 @@ def media_player():
     else:
         player.set_hwnd(media_window["-VID_OUT-"].Widget.winfo_id())
 
-    media_list.add_media("Teepause.mp4")
+    media_list.add_media("Teepause.mp3")
     list_player.play()
     # ------------ The Event Loop ------------#
     while True:
@@ -952,6 +953,7 @@ def code837_window():
                 visible=False,
             ),
         ],
+        [sg.Image("", size=(1400, 788), k="-VID_OUT2-", visible=False)],
     ]
     # Code 837 Window initialization
     code837_window = sg.Window(
@@ -973,10 +975,40 @@ def code837_window():
             code837_window["-Code837Column2-"].update(visible=True)
 
         if event == "Lösung prüfen" and values["-INPUT-Code837-"] == "Fels Israels":
-            sg.popup(
-                "Korrekt. OK zum schließen",
-                keep_on_top=True,
-            )
+            code837_window["-Code837Column2-"].update(visible=False)
+            code837_window["-VID_OUT2-"].update(visible=True)
+            code837_window["-VID_OUT2-"].expand(True, True)
+
+            inst = vlc.Instance()
+            list_player = inst.media_list_player_new()
+            media_list = inst.media_list_new([])
+            list_player.set_media_list(media_list)
+            player = list_player.get_media_player()
+
+            if PLATFORM.startswith("linux"):
+                player.set_xwindow(code837_window["-VID_OUT2-"].Widget.winfo_id())
+            else:
+                player.set_hwnd(code837_window["-VID_OUT2-"].Widget.winfo_id())
+
+            media_list.add_media("Final.mp3")
+            list_player.play()
+            # ------------ The Event Loop ------------#
+            while True:
+                event, values = code837_window.read(
+                    timeout=1000
+                )  # run with a timeout so that current location can be updated
+                if event == sg.WIN_CLOSED:
+                    break
+
+                # update elapsed time if there is a video loaded and the player is playing
+                if player.is_playing():
+                    pass
+                else:
+                    sg.popup(
+                        "Herzlichen Glückwunsch! Ihr habt alle Rätsel gelöst. OK zum schließen",
+                        keep_on_top=True,
+                    )
+                    break
             break
 
         elif event == "Lösung prüfen":
@@ -986,7 +1018,8 @@ def code837_window():
                 keep_on_top=True,
             )
 
-        if event != "Fels Israels" or event != "Lösung prüfen":
+        if event != "Fels Israels" and event != "Lösung prüfen":
+            print(event)
             sg.popup_ok(
                 "Eingabe falsch!",
                 title="Fehler",
