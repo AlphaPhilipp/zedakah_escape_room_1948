@@ -1,6 +1,45 @@
 import PySimpleGUI as sg
+
 import vlc
 from sys import platform as PLATFORM
+
+# import cv2
+import lgpio
+import time
+
+gpio_pins = [2, 3, 4, 14, 15, 21]
+
+# LGPIO initialisieren
+# gpio = lgpio.gpiochip_open(0)
+
+# for pin in gpio_pins:
+#    lgpio.gpio_claim_output(gpio, pin)
+
+# Tasseschrank 57, Relais3
+# 54, Relais 2
+# 59, Relais 1
+# 60, Relais 4
+# Bunkertür 24, Relais 5
+# Blaulicht, Relais 6
+
+# Funktion für cv2
+# def play_video(file_path):
+#    cap = cv2.VideoCapture(file_path)
+#
+#    while cap.isOpened():
+#        ret, frame = cap.read()
+#
+#        if not ret:
+#            break
+#
+#        cv2.imshow("Video", frame)
+#
+#        if cv2.waitKey(1) & 0xFF == ord("q"):
+#            break
+#
+#    cap.release()
+#    cv2.destroyAllWindows()
+
 
 sg.theme("DarkBlue1")
 
@@ -420,14 +459,14 @@ layout_MasterFolder = [
 master_window = sg.Window(
     "Escape Room",
     layout_MasterFolder,
-    no_titlebar=True,
+    # no_titlebar=True,
     location=(0, 0),
     size=(1920, 1080),
-    keep_on_top=True,
+    # keep_on_top=True,
     element_justification="center",
     element_padding=None,
 ).Finalize()
-master_window.Maximize()
+# master_window.Maximize()
 
 
 def master_media_window():
@@ -484,7 +523,9 @@ def master_media_window():
             pass
         else:
             break
-    master_media_window.close()
+    # video_path = "Master.mp4"
+    # play_video(video_path)
+    # master_media_window.close()
 
 
 # Second (Subfolders) Window
@@ -597,10 +638,16 @@ def subfolder_window():
                 if password == "Euer Land":
                     sg.popup_timed(
                         "Korrekt! Der nächste Ordner wird entsperrt.",
-                        title="Korrekt!",
+                        title="Korrekt!2",
                         auto_close_duration=3,
                         keep_on_top=True,
                     )
+                    # Relais2
+                    # state = lgpio.gpio_read(gpio, gpio_pins[1])
+                    # lgpio.gpio_write(gpio, gpio_pins[1], not state)
+                    # time.sleep(2)
+                    # state = lgpio.gpio_read(gpio, gpio_pins[1])
+                    # lgpio.gpio_write(gpio, gpio_pins[1], not state)
                     break
                 else:
                     sg.popup_ok(
@@ -697,7 +744,6 @@ def subfolder_window():
             or event == "Subfolder-Code837-4"
         ) and unlock_Code837 == True:
             code837_window()
-            break
 
         # Error if locked
         elif (
@@ -767,10 +813,16 @@ def ordnung_window():
         ):
             sg.popup_timed(
                 "Korrekt! Der nächste Ordner wird entsperrt.",
-                title="Korrekt!",
+                title="Korrekt!3",
                 auto_close_duration=3,
                 keep_on_top=True,
             )
+            # Relais3
+            # state = lgpio.gpio_read(gpio, gpio_pins[2])
+            # lgpio.gpio_write(gpio, gpio_pins[2], not state)
+            # time.sleep(2)
+            # state = lgpio.gpio_read(gpio, gpio_pins[2])
+            # lgpio.gpio_write(gpio, gpio_pins[2], not state)
 
             break
 
@@ -839,6 +891,9 @@ def media_player():
                 keep_on_top=True,
             )
             break
+    # video_path = "Teepause.mp3"
+    # play_video(video_path)
+
     media_window.close()
 
 
@@ -873,6 +928,10 @@ def universum_window():
     ).Finalize()
     universum_window.Maximize()
     universum_window["-VID_OUT-"].expand(True, True)
+    # video_path = 'Universum.mp4'
+    # play_video(video_path)
+    # master_media_window.close()
+
     # ------------ Media Player Setup ---------#
 
     inst = vlc.Instance()
@@ -891,6 +950,7 @@ def universum_window():
     while True:
         event, values = universum_window.read()
 
+        # VLC Media Player Control
         # Media Player Control
         if event == "Wiedergabe":
             list_player.play()
@@ -900,6 +960,16 @@ def universum_window():
             list_player.previous()
             list_player.play()
 
+        # CV Media Player Control
+        # if event == "Wiedergabe":
+        #    video_path = 'Universum.mp4'
+        #    play_video(video_path)
+
+        # if event == "Pause":
+        #   list_player.pause()
+        # if event == "Von Anfang an":
+        # list_player.previous()
+        # list_player.play()
         # Close the Window if Solution is correct
         if (
             event == "-CHECK-Universum-"
@@ -910,10 +980,16 @@ def universum_window():
         ):
             sg.popup_timed(
                 "Korrekt! Der nächste Ordner wird entsperrt.",
-                title="Korrekt!",
+                title="Korrekt!1",
                 auto_close_duration=3,
                 keep_on_top=True,
             )
+            # Relais1
+            # state = lgpio.gpio_read(gpio, gpio_pins[0])
+            # lgpio.gpio_write(gpio, gpio_pins[0], not state)
+            # time.sleep(2)
+            # state = lgpio.gpio_read(gpio, gpio_pins[0])
+            # lgpio.gpio_write(gpio, gpio_pins[0], not state)
             break
         elif event == "-CHECK-Universum-":
             sg.popup_ok(
@@ -953,7 +1029,6 @@ def code837_window():
                 visible=False,
             ),
         ],
-        [sg.Image("", size=(1400, 788), k="-VID_OUT2-", visible=False)],
     ]
     # Code 837 Window initialization
     code837_window = sg.Window(
@@ -975,40 +1050,19 @@ def code837_window():
             code837_window["-Code837Column2-"].update(visible=True)
 
         if event == "Lösung prüfen" and values["-INPUT-Code837-"] == "Fels Israels":
-            code837_window["-Code837Column2-"].update(visible=False)
-            code837_window["-VID_OUT2-"].update(visible=True)
-            code837_window["-VID_OUT2-"].expand(True, True)
+            sg.popup(
+                "Korrekt. OK zum schließen",
+                keep_on_top=True,
+            )
+            # Relais 5 Kurz ,6 und Nach Count. plus relais 4
+            # state = lgpio.gpio_read(gpio, gpio_pins[4])
+            # lgpio.gpio_write(gpio, gpio_pins[4], not state)
+            # state = lgpio.gpio_read(gpio, gpio_pins[5])
+            # lgpio.gpio_write(gpio, gpio_pins[5], not state)
+            # time.sleep(2)
+            # state = lgpio.gpio_read(gpio, gpio_pins[4])
+            # lgpio.gpio_write(gpio, gpio_pins[4], not state)
 
-            inst = vlc.Instance()
-            list_player = inst.media_list_player_new()
-            media_list = inst.media_list_new([])
-            list_player.set_media_list(media_list)
-            player = list_player.get_media_player()
-
-            if PLATFORM.startswith("linux"):
-                player.set_xwindow(code837_window["-VID_OUT2-"].Widget.winfo_id())
-            else:
-                player.set_hwnd(code837_window["-VID_OUT2-"].Widget.winfo_id())
-
-            media_list.add_media("Final.mp3")
-            list_player.play()
-            # ------------ The Event Loop ------------#
-            while True:
-                event, values = code837_window.read(
-                    timeout=1000
-                )  # run with a timeout so that current location can be updated
-                if event == sg.WIN_CLOSED:
-                    break
-
-                # update elapsed time if there is a video loaded and the player is playing
-                if player.is_playing():
-                    pass
-                else:
-                    sg.popup(
-                        "Herzlichen Glückwunsch! Ihr habt alle Rätsel gelöst. OK zum schließen",
-                        keep_on_top=True,
-                    )
-                    break
             break
 
         elif event == "Lösung prüfen":
@@ -1018,8 +1072,7 @@ def code837_window():
                 keep_on_top=True,
             )
 
-        if event != "Fels Israels" and event != "Lösung prüfen":
-            print(event)
+        if event != "Fels Israels" or event != "Lösung prüfen":
             sg.popup_ok(
                 "Eingabe falsch!",
                 title="Fehler",
