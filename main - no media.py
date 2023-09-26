@@ -1,6 +1,4 @@
 import PySimpleGUI as sg
-
-import vlc
 from sys import platform as PLATFORM
 
 # import cv2
@@ -10,10 +8,10 @@ import time
 gpio_pins = [2, 3, 4, 14, 15, 21]
 
 # LGPIO initialisieren
-##gpio = lgpio.gpiochip_open(0)
+gpio = lgpio.gpiochip_open(0)
 
-##for pin in gpio_pins:
-##    lgpio.gpio_claim_output(gpio, pin)
+for pin in gpio_pins:
+    lgpio.gpio_claim_output(gpio, pin)
 
 # Tasseschrank 57, Relais3
 # 54, Relais 2
@@ -285,7 +283,12 @@ column_Ordnung_Bottom = [
 
 # Layout within the column on the Universum Screen
 column_Universum = [
-    [sg.Image(source="UniversumBilder", filename="Sonne.jpg")],
+    [
+        sg.Image(filename="Sonne.png", subsample=(2), pad=(15, 15)),
+        sg.Image(filename="Mond.png", subsample=(2), pad=(15, 15)),
+        sg.Image(filename="Sterne.png", subsample=(2), pad=(15, 15)),
+        sg.Image(filename="Meer.png", subsample=(2), pad=(15, 15)),
+    ],
     [
         sg.Combo(
             numbers,
@@ -435,6 +438,11 @@ column_code837_2 = [
     ],
 ]
 
+column_exit = [
+    [sg.Image(filename="Exit.png", expand_y=True)],
+    [sg.Text("Geschafft! Nichts wie raus")],
+    [sg.Button(k="-EXIT-", button_text="Beenden", button_color="red")],
+]
 # Layout within the Master Folder Window
 layout_MasterFolder = [
     [
@@ -468,65 +476,6 @@ master_window = sg.Window(
     element_padding=None,
 ).Finalize()
 # master_window.Maximize()
-
-
-def master_media_window():
-    # ------- GUI definition & setup --------#
-
-    layout_mastermediaplayer = [
-        [sg.Text("", expand_y=True)],
-        [
-            sg.Image(
-                "",
-                size=(1400, 788),
-                key="-VID_OUT-",
-                expand_x=True,
-            )
-        ],
-        [sg.Text("", expand_y=True)],
-    ]
-
-    master_media_window = sg.Window(
-        "Master Media Player",
-        layout_mastermediaplayer,
-        element_justification="center",
-        finalize=True,
-        keep_on_top=True,
-        no_titlebar=True,
-        location=(0, 0),
-    )
-    master_media_window.Maximize()
-    master_media_window["-VID_OUT-"].expand(True, True)  # type: sg.Element
-    # ------------ Media Player Setup ---------#
-
-    inst = vlc.Instance()
-    list_player = inst.media_list_player_new()
-    media_list = inst.media_list_new([])
-    list_player.set_media_list(media_list)
-    player = list_player.get_media_player()
-    if PLATFORM.startswith("linux"):
-        player.set_xwindow(master_media_window["-VID_OUT-"].Widget.winfo_id())
-    else:
-        player.set_hwnd(master_media_window["-VID_OUT-"].Widget.winfo_id())
-
-    media_list.add_media("Master.mp4")
-    list_player.play()
-    # ------------ The Event Loop ------------#
-    while True:
-        event, values = master_media_window.read(
-            timeout=1000
-        )  # run with a timeout so that current location can be updated
-        if event == sg.WIN_CLOSED:
-            break
-
-        # update elapsed time if there is a video loaded and the player is playing
-        if player.is_playing():
-            pass
-        else:
-            break
-    # video_path = "Master.mp4"
-    # play_video(video_path)
-    # master_media_window.close()
 
 
 # Second (Subfolders) Window
@@ -629,7 +578,8 @@ def subfolder_window():
         ):
             solved_Teepause = True
             unlock_Universum = True
-            # media_player()
+
+            # Teepause Event Loop
             while True:
                 sg.popup_timed(
                     "Verbindung abgebrochen. Ein Netzwerkfehler liegt vor.",
@@ -649,11 +599,11 @@ def subfolder_window():
                         keep_on_top=True,
                     )
                     # Relais2
-                    ##state = lgpio.gpio_read(gpio, gpio_pins[1])
-                    ##lgpio.gpio_write(gpio, gpio_pins[1], not state)
-                    ##time.sleep(2)
-                    ##state = lgpio.gpio_read(gpio, gpio_pins[1])
-                    ##lgpio.gpio_write(gpio, gpio_pins[1], not state)
+                    state = lgpio.gpio_read(gpio, gpio_pins[1])
+                    lgpio.gpio_write(gpio, gpio_pins[1], not state)
+                    time.sleep(2)
+                    state = lgpio.gpio_read(gpio, gpio_pins[1])
+                    lgpio.gpio_write(gpio, gpio_pins[1], not state)
                     break
                 else:
                     sg.popup_ok(
@@ -663,7 +613,6 @@ def subfolder_window():
                     )
             subfolders_window["-SubfoldersColumn2-"].update(visible=False)
             subfolders_window["-SubfoldersColumn3-"].update(visible=True)
-            # teepause_window()
 
         # Error if locked
         elif (
@@ -750,6 +699,7 @@ def subfolder_window():
             or event == "Subfolder-Code837-4"
         ) and unlock_Code837 == True:
             code837_window()
+            break
 
         # Error if locked
         elif (
@@ -824,11 +774,11 @@ def ordnung_window():
                 keep_on_top=True,
             )
             # Relais3
-            ##            state = lgpio.gpio_read(gpio, gpio_pins[2])
-            ##            lgpio.gpio_write(gpio, gpio_pins[2], not state)
-            ##            time.sleep(2)
-            ##            state = lgpio.gpio_read(gpio, gpio_pins[2])
-            ##            lgpio.gpio_write(gpio, gpio_pins[2], not state)
+            state = lgpio.gpio_read(gpio, gpio_pins[2])
+            lgpio.gpio_write(gpio, gpio_pins[2], not state)
+            time.sleep(2)
+            state = lgpio.gpio_read(gpio, gpio_pins[2])
+            lgpio.gpio_write(gpio, gpio_pins[2], not state)
 
             break
 
@@ -846,68 +796,10 @@ def ordnung_window():
     ordnung_window.close()
 
 
-# Media Player. THIS IS HAPPENING INSTEAD OF Teepause_window()
-def media_player():
-    # ------- GUI definition & setup --------#
-
-    layout_mediaplayer = [
-        [sg.Image("", size=(1400, 788), key="-VID_OUT-")],
-    ]
-
-    media_window = sg.Window(
-        "Media Player",
-        layout_mediaplayer,
-        element_justification="center",
-        finalize=True,
-        keep_on_top=True,
-        no_titlebar=True,
-        location=(0, 0),
-    )
-    media_window.Maximize()
-    media_window["-VID_OUT-"].expand(True, True)  # type: sg.Element
-    # ------------ Media Player Setup ---------#
-
-    inst = vlc.Instance()
-    list_player = inst.media_list_player_new()
-    media_list = inst.media_list_new([])
-    list_player.set_media_list(media_list)
-    player = list_player.get_media_player()
-    if PLATFORM.startswith("linux"):
-        player.set_xwindow(media_window["-VID_OUT-"].Widget.winfo_id())
-    else:
-        player.set_hwnd(media_window["-VID_OUT-"].Widget.winfo_id())
-
-    media_list.add_media("Teepause.mp3")
-    list_player.play()
-    # ------------ The Event Loop ------------#
-    while True:
-        event, values = media_window.read(
-            timeout=1000
-        )  # run with a timeout so that current location can be updated
-        if event == sg.WIN_CLOSED:
-            break
-
-        # update elapsed time if there is a video loaded and the player is playing
-        if player.is_playing():
-            pass
-        else:
-            break
-    # video_path = "Teepause.mp3"
-    # play_video(video_path)
-
-    media_window.close()
-
-
 # Universum Window
 def universum_window():
-    # Media Player Buttons
-    # def btn(name):  # a PySimpleGUI "User Defined Element" (see docs)
-    #    return sg.Button(name, size=(12, 1), pad=(3, 1))
-
     # Universum Window Layout
     layout_universum = [
-        # [sg.Image("", size=(300, 170), key="-VID_OUT-")],
-        # [btn("Von Anfang an"), btn("Wiedergabe"), btn("Pause")],
         [
             sg.Column(
                 column_Universum,
@@ -928,49 +820,11 @@ def universum_window():
         element_justification="c",
     ).Finalize()
     universum_window.Maximize()
-    # universum_window["-VID_OUT-"].expand(True, True)
-    # video_path = 'Universum.mp4'
-    # play_video(video_path)
-    # master_media_window.close()
 
-    # ------------ Media Player Setup ---------#
-
-    # inst = vlc.Instance()
-    # list_player = inst.media_list_player_new()
-    # media_list = inst.media_list_new([])
-    # list_player.set_media_list(media_list)
-    # player = list_player.get_media_player()
-    # if PLATFORM.startswith("linux"):
-    #    player.set_xwindow(universum_window["-VID_OUT-"].Widget.winfo_id())
-    # else:
-    #    player.set_hwnd(universum_window["-VID_OUT-"].Widget.winfo_id())
-
-    # media_list.add_media("Universum.mp4")
-    # list_player.play()
     # Universum Window Event Loop
     while True:
         event, values = universum_window.read()
 
-        # VLC Media Player Control
-        # Media Player Control
-        # if event == "Wiedergabe":
-        #    list_player.play()
-        # if event == "Pause":
-        #    list_player.pause()
-        # if event == "Von Anfang an":
-        #    list_player.previous()
-        #    list_player.play()
-
-        # CV Media Player Control
-        # if event == "Wiedergabe":
-        #    video_path = 'Universum.mp4'
-        #    play_video(video_path)
-
-        # if event == "Pause":
-        #   list_player.pause()
-        # if event == "Von Anfang an":
-        # list_player.previous()
-        # list_player.play()
         # Close the Window if Solution is correct
         if (
             event == "-CHECK-Universum-"
@@ -986,11 +840,11 @@ def universum_window():
                 keep_on_top=True,
             )
             # Relais1
-            ##state = lgpio.gpio_read(gpio, gpio_pins[0])
-            ##lgpio.gpio_write(gpio, gpio_pins[0], not state)
-            ##time.sleep(2)
-            ##state = lgpio.gpio_read(gpio, gpio_pins[0])
-            ##lgpio.gpio_write(gpio, gpio_pins[0], not state)
+            state = lgpio.gpio_read(gpio, gpio_pins[0])
+            lgpio.gpio_write(gpio, gpio_pins[0], not state)
+            time.sleep(2)
+            state = lgpio.gpio_read(gpio, gpio_pins[0])
+            lgpio.gpio_write(gpio, gpio_pins[0], not state)
             break
         elif event == "-CHECK-Universum-":
             sg.popup_ok(
@@ -1022,7 +876,7 @@ def code837_window():
         [
             sg.Column(
                 column_code837_2,
-                expand_y=True,
+                expand_y=False,
                 vertical_alignment="center",
                 justification="c",
                 element_justification="c",
@@ -1050,23 +904,22 @@ def code837_window():
             code837_window["-Code837Column1-"].update(visible=False)
             code837_window["-Code837Column2-"].update(visible=True)
 
+        # Open End Message if Solution is Correct
         if event == "Lösung prüfen" and values["-INPUT-Code837-"] == "Fels Israels":
-            sg.popup(
-                "Korrekt. OK zum schließen",
-                keep_on_top=True,
-            )
+            exit_window()
+
             # Relais 5 Kurz ,6 und Nach Count. plus relais 4
-            state = lgpio.gpio_read(gpio, gpio_pins[4])
+            """state = lgpio.gpio_read(gpio, gpio_pins[4])
             lgpio.gpio_write(gpio, gpio_pins[4], not state)
             state = lgpio.gpio_read(gpio, gpio_pins[5])
             lgpio.gpio_write(gpio, gpio_pins[5], not state)
             time.sleep(2)
             state = lgpio.gpio_read(gpio, gpio_pins[4])
-            lgpio.gpio_write(gpio, gpio_pins[4], not state)
+            lgpio.gpio_write(gpio, gpio_pins[4], not state)"""
 
             break
 
-        elif event == "Lösung prüfen":
+        if event == "Lösung prüfen" and values["-INPUT-Code837-"] != "Fels Israels":
             sg.popup_ok(
                 "Codename falsch!",
                 title="Fehler",
@@ -1084,6 +937,50 @@ def code837_window():
         if event == sg.WIN_CLOSED:
             break
     code837_window.close()
+
+
+def exit_window():
+    # Exit Window Layout
+    layout_exit = [
+        [
+            sg.Column(
+                column_exit,
+                expand_y=True,
+                vertical_alignment="center",
+                justification="c",
+                element_justification="c",
+                k="-EXIT-",
+                visible=True,
+            ),
+        ],
+    ]
+    # Exit Window initialization
+    exit_window = sg.Window(
+        "Escape Room",
+        layout_exit,
+        no_titlebar=True,
+        location=(0, 0),
+        keep_on_top=True,
+    ).Finalize()
+    exit_window.Maximize()
+
+    # Exit Window Event Loop
+    while True:
+        event, values = exit_window.read()
+
+        if event == "-EXIT-":
+            exit = sg.popup_ok_cancel(
+                "Möchtest du das Master Control Programm wirklich schließen? Du könntest Hinweise übersehen haben!  Ab hier hilft der Computer nicht mehr weiter...",
+                title="Programm beenden?",
+                keep_on_top=True,
+            )
+            if exit == "OK":
+                break
+
+        # End Exit Window if user closes window
+        if event == sg.WIN_CLOSED:
+            break
+    exit_window.close()
 
 
 # Master event loop
